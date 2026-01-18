@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Offers | Aarohi Electrical & Electronics</title>
+<meta name="description" content="Latest electrical offers in Patna City. LED lights, fans & switches on discount.">
+<link rel="stylesheet" href="index.html">
+</head>
+<body>
+
+<header>
+  <strong>🔥 Current Offers</strong>
+  <a href="index.html">← Back to Products</a>
+</header>
+
+<div class="container">
+  <div id="grid" class="grid"></div>
+</div>
+
+<script>
+const DATA_URL="PASTE_YOUR_GOOGLE_SCRIPT_URL_HERE";
+
+fetch(DATA_URL).then(r=>r.json()).then(data=>{
+  const offers=data.filter(p=>p.active==="yes" && p.offer);
+  grid.innerHTML=offers.map(p=>`
+    <div class="card highlight">
+      <div class="badge">${p.offer}</div>
+      <img src="${p.image}">
+      <h4>${p.name}</h4>
+      <div class="price">₹${p.price}</div>
+      <a href="https://wa.me/${p.whatsapp}?text=Hi%20AEE,%20I%20want%20${encodeURIComponent(p.name)}">
+        WhatsApp Order
+      </a>
+    </div>
+  `).join("");
+});
+</script>
+
+</body>
+</html>

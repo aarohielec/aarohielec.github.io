@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Product | Aarohi Electrical & Electronics</title>
+
+<style>
+body { margin:0; font-family:system-ui; background:#f1f3f6; }
+header {
+  background:#2874f0; color:#fff;
+  padding:14px 20px;
+  display:flex; align-items:center; gap:12px;
+}
+header img {
+  width:40px; height:40px; border-radius:50%;
+  object-fit:cover; background:#fff; padding:3px;
+}
+.container { max-width:1100px; margin:auto; padding:20px; }
+.product {
+  background:#fff; border-radius:8px; padding:20px;
+  display:grid; grid-template-columns:1fr 1fr; gap:24px;
+}
+.main-img {
+  width:100%; max-height:340px;
+  object-fit:contain; border:1px solid #ddd; border-radius:6px;
+}
+.thumbs { display:flex; gap:10px; margin-top:10px; }
+.thumbs img {
+  width:70px; height:70px; object-fit:contain;
+  border:1px solid #ccc; border-radius:4px; cursor:pointer;
+}
+.name { font-size:22px; font-weight:700; }
+.category { color:#555; margin:6px 0; }
+.mrp { color:#888; text-decoration:line-through; }
+.price { font-size:26px; font-weight:800; margin:6px 0; }
+.offer { color:#2e7d32; font-weight:600; }
+.desc { margin-top:15px; line-height:1.6; }
+.whatsapp {
+  display:inline-block; margin-top:20px;
+  background:#25d366; color:#fff;
+  padding:12px 18px; border-radius:6px;
+  text-decoration:none; font-weight:600;
+}
+.back {
+  display:inline-block; margin-top:15px;
+  color:#2874f0; text-decoration:none;
+}
+@media(max-width:768px){
+  .product{ grid-template-columns:1fr; }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <img src="logo.jpg" alt="AEE Logo">
+  <strong>Aarohi Electrical & Electronics</strong>
+</header>
+
+<div class="container" id="app">
+  Loading product…
+</div>
+
+<script>
+/* ================= CONFIG ================= */
+const DATA_URL = "https://script.google.com/macros/s/AKfycbyJQF3Jy481wx3yJgC4hckNuaz9_NIKwVqladLzoZrUrs9sF6-sQmOo_M-L2uv-n9HHRA/exec";
+const CACHE_KEY = "AEE_PRODUCTS_CACHE";
+const CACHE_TIME = 5 * 60 * 1000;
+/* ========================================= */
+
+/* ---------- UTIL ---------- */
+function getQueryId() {
+  return new URLSearchParams(window.location.search).get("id");
+}
+
+/* ---------- CACHE FETCH ---------- */
+async function getProducts() {
+  const cached = localStorage.getItem(CACHE_KEY);
+  const cachedTime = localStorage.getItem(CACHE_KEY + "_TIME");
+
+  if (cached && cachedTime && Date.now() - cachedTime < CACHE_TIME) {
+    return JSON.parse(cached);
+  }
+
+  const res = await fetch(DATA_URL);
+  const data = await res.json();
+
+  localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+  localStorage.setItem(CACHE_KEY + "_TIME", Date.now());
+
+  return data;
+}
+
+/* ---------- MAIN LOAD ---------- */
+function loadProduct() {
+  const productId = getQueryId();
+
+  if (!productId) {
+    document.getElementById("app").innerHTML = "Invalid product.";
+    return;
+  }
+
+  getProducts().then(data => {
+    const product = data.find(p =>
+      String(p.id).trim() === String(productId).trim() &&
+      String(p.active).toLowerCase().trim() === "yes"
+    );
+
+    if (!product) {
+      document.getElementById("app").innerHTML = "Product not found.";
+      return;
+    }
+
+    renderProduct(product);
+  });
+}
+
+/* ---------- RENDER ---------- */
+function renderProduct(product) {
+
+ const images = product.images
+  ? product.images
+      .toString()
+      .replace(/\n/g, "")          // remove line breaks
+      .replace(/\s+/g, "")         // remove spaces
+      .split(",")                  // split by comma
+      .filter(img => img.length)   // remove empty values
+  : [];
+
+  document.title = `${product.brand} ${product.model} | Aarohi Electrical`;
+
+  const message = encodeURIComponent(
+    `Hi Aarohi Electrical,\nI am interested in:\n${product.brand} ${product.model}\nPrice: ₹${product.price}`
+  );
+
+  document.getElementById("app").innerHTML = `
+    <div class="product">
+
+      <div>
+        <img id="mainImg" class="main-img"
+             src="${images[0] || ''}" loading="lazy">
+
+        <div class="thumbs">
+         ${images.slice(1).map(img =>
+            `<img src="${img}" loading="lazy"
+                  onclick="setMainImage('${img}')">`
+          ).join("")}
+        </div>
+      </div>
+
+      <div>
+        <div class="name">${product.brand} ${product.model}</div>
+        <div class="category">Category: ${product.category}</div>
+
+        ${product.mrp ? `<div class="mrp">MRP ₹${product.mrp}</div>` : ""}
+        <div class="price">₹${product.price}</div>
+        ${product.offer ? `<div class="offer">${product.offer}</div>` : ""}
+
+        <div class="desc">${product.description || ""}</div>
+
+        <a class="whatsapp"
+           href="https://wa.me/${product.whatsapp}?text=${message}"
+           target="_blank">
+           Order / Enquiry on WhatsApp
+        </a>
+
+        <br>
+        <a class="back"
+           href="category.html?cat=${encodeURIComponent(product.category)}">
+           ← Back to ${product.category}
+        </a>
+      </div>
+
+    </div>
+  `;
+}
+
+/* ---------- IMAGE SWITCH ---------- */
+function setMainImage(src) {
+  document.getElementById("mainImg").src = src;
+}
+
+/* ---------- START ---------- */
+loadProduct();
+</script>
+
+</body>
+</html>
